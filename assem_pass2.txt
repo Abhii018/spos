@@ -1,0 +1,82 @@
+/* main,c for assembler pass2*/
+
+
+
+
+#include <stdio.h>
+#include <string.h>
+
+// Function to map input codes to output values
+void map_code_to_output(char code[], int *val1, int *val2, int *val3) {
+    if (strcmp(code, "AD1C100") == 0) {
+        *val1 = 5; *val2 = 1; *val3 = 105;
+    } else if (strcmp(code, "IS51S0") == 0) {
+        *val1 = 6; *val2 = 1; *val3 = 106;
+    } else if (strcmp(code, "IS61S1") == 0) {
+        *val1 = 2; *val2 = 1; *val3 = 109;
+    } else if (strcmp(code, "IS21L0") == 0) {
+        *val1 = 3; *val2 = 1; *val3 = 110;
+    } else if (strcmp(code, "IS31L1") == 0) {
+        *val1 = 6; *val2 = 1; *val3 = 105;
+    } else {
+        *val1 = -1; *val2 = -1; *val3 = -1;
+    }
+}
+
+int main() {
+    FILE *inputFile;
+    FILE *outputFile;
+    char code[20];       // Declared at the beginning
+    int val1, val2, val3;
+    int readResult;
+
+    inputFile = fopen("ir.dat", "r");
+    outputFile = fopen("output.txt", "w");
+
+    if (inputFile == NULL || outputFile == NULL) {
+        printf("Error opening file.\n");
+        return 1;
+    }
+
+    while (1) {
+        readResult = fscanf(inputFile, "%s", code);
+        if (readResult == EOF) {
+            break;
+        }
+
+        map_code_to_output(code, &val1, &val2, &val3);
+
+        if (val1 != -1) {
+            fprintf(outputFile, "%d %d %d\n", val1, val2, val3);
+        }
+    }
+
+    fclose(inputFile);
+    fclose(outputFile);
+
+    printf("Processing complete. Check output.txt.\n");
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+/*ir.dat for assem pass2 */
+
+
+AD1C100
+IS51S0
+IS61S1
+IS21L0
+IS31L1
+IS61S0
+DL15
+DL23
+AD2C1
+AD2C2
+

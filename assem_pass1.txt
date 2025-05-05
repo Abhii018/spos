@@ -1,0 +1,161 @@
+/* main.c for assembler pass1 */
+
+
+
+
+
+#include <stdio.h>
+#include <string.h>
+
+char mot[6][6] = {"STOP", "ADD", "SUB", "MUL", "MOVER", "MOVEM"}; // mnemonics
+char r[4][6] = {"AREG", "BREG", "CREG", "DREG"}; // registers
+
+struct l {
+    char name;
+    int add;
+} lit[20];
+
+struct s {
+    char name[20];
+    int add;
+} sy[20];
+
+int main() {
+    char st[10];
+    int lc, n1 = 0, ns = 0, i, j = 0, k = 0, litflag = 0, m = 0, tempb, flag = 0;
+    FILE *fip, *fir;
+
+    fip = fopen("input.asm", "r"); // assembler input
+    fir = fopen("ir.dat", "w");    // intermediate representation
+
+    if (fip == NULL || fir == NULL) {
+        printf("Error opening file.\n");
+        return 1;
+    }
+
+    fscanf(fip, "%s", st); // read input
+
+    while (!feof(fip)) {
+    up:
+        if (!strcmp(st, "START")) {
+            fscanf(fip, "%d", &lc);
+            fprintf(fir, "AD%d C%d\n", 1, lc);
+        }
+
+        fscanf(fip, "%s", st);
+
+        for (i = 0; i < 6; i++) {
+            if (!strcmp(st, mot[i])) {
+                fprintf(fir, "IS%d ", i + 1);
+                fscanf(fip, "%s", st);
+
+                for (j = 0; j < 4; j++) {
+                    if (!strcmp(st, r[j])) {
+                        fprintf(fir, "%d ", j + 1);
+                        break;
+                    }
+                }
+
+                fscanf(fip, "%s", st);
+                if (!strcmp(st, "=")) {
+                    k = 1;
+                    fscanf(fip, "%s", st);
+
+                    litflag = 0;
+                    for (j = 0; j < n1; j++) {
+                        if ((lit[j].name == st[1])) {
+                            litflag = 1;
+                            fprintf(fir, "L%d\n", j);
+                        }
+                    }
+
+                    if (litflag == 0) {
+                        lit[n1].name = st[1];
+                        fprintf(fir, "L%d\n", n1);
+                        n1++;
+                    }
+                    break;
+                } else {
+                    flag = 0;
+                    for (j = 0; j < ns; j++) {
+                        if (!strcmp(sy[j].name, st)) {
+                            flag = 1;
+                            fprintf(fir, "S%d\n", j);
+                            lc++;
+                            goto up;
+                        }
+                    }
+
+                    if (flag == 0) {
+                        strcpy(sy[ns].name, st);
+                        fprintf(fir, "S%d\n", ns);
+                        ns++;
+                        break;
+                    }
+                }
+            }
+
+            for (m = 0; m < ns; m++) {
+                if (!strcmp(st, sy[m].name)) {
+                    fscanf(fip, "%s", st);
+                    if (!strcmp(st, "DS")) {
+                        fscanf(fip, "%d", &tempb);
+                        fprintf(fir, "DL2 %d\n", tempb);
+                        sy[m].add = lc;
+                        lc += tempb;
+                        goto up;
+                    } else if (!strcmp(st, "DC")) {
+                        fscanf(fip, "%d", &tempb);
+                        fprintf(fir, "DL1 %d\n", tempb);
+                        sy[m].add = lc;
+                        goto up;
+                    }
+                }
+            }
+        }
+
+        if (!strcmp(st, "END")) {
+            for (i = 0; i < n1; i++) {
+                fprintf(fir, "AD2 C%c\n", lit[i].name);
+                lit[i].add = lc;
+                lc++;
+            }
+            break;
+        }
+
+        lc++;
+        fprintf(fir, "\n");
+    }
+
+    printf("\nDATABASE:");
+    printf("\nSYMBOL TABLE\nENTRY\tSYMBOL\tADDRESS\n");
+    for (i = 0; i < ns; i++)
+        printf("%d\t%s\t%d\n", i, sy[i].name, sy[i].add);
+
+    printf("\nLITERAL TABLE\nENTRY\tLITERAL\tADDRESS\n");
+    for (i = 0; i < n1; i++)
+        printf("%d\t%c\t%d\n", i, lit[i].name, lit[i].add);
+
+    fclose(fir);
+    fclose(fip);
+    return 0;
+}
+
+
+
+
+
+
+
+
+/*input.asm for assembler pass1*/
+
+
+
+START 100
+MOVER AREG =5
+ADD BREG =3
+SUB CREG A
+A DS 1
+B DC 4
+END
